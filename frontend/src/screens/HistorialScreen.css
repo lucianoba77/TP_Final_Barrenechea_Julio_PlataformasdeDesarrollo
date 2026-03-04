@@ -1,0 +1,477 @@
+.historial-screen {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e8f4f8 100%);
+  padding-bottom: calc(100px + env(safe-area-inset-bottom));
+}
+
+.historial-header {
+  background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%);
+  padding: max(20px, env(safe-area-inset-top) + 12px) var(--spacing-lg) var(--spacing-md);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  box-shadow: var(--shadow-md);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  overflow: visible;
+}
+
+.btn-home {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 20px;
+  transition: all 0.2s ease;
+}
+
+.btn-home:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+.historial-header h1 {
+  color: white;
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0;
+  flex: 1;
+  text-align: center;
+}
+
+.historial-content {
+  padding: var(--spacing-lg) var(--spacing-md);
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.stats-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  background: #E0E0E0;
+  border-radius: 16px;
+  padding: 20px;
+  text-align: center;
+}
+
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  margin: 0 auto 12px;
+}
+
+.stat-number {
+  font-size: 28px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #666;
+  font-weight: 500;
+}
+
+.section-card {
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.section-icon {
+  font-size: 24px;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #333;
+  margin: 0;
+}
+
+.adherencia-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Tarjeta de adherencia promedio */
+.adherencia-promedio-card {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-left: 6px solid #4CAF50;
+}
+
+.adherencia-promedio-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.adherencia-icon {
+  font-size: 48px;
+  flex-shrink: 0;
+}
+
+.adherencia-promedio-header h2 {
+  margin: 0 0 4px 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #333;
+}
+
+.adherencia-mensaje {
+  margin: 0;
+  font-size: 14px;
+  color: #666;
+}
+
+.adherencia-porcentaje-grande {
+  font-size: 48px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.adherencia-bar-large {
+  width: 100%;
+  height: 16px;
+  background-color: #E0E0E0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.adherencia-bar-fill {
+  height: 100%;
+  border-radius: 8px;
+  transition: width 0.5s ease;
+}
+
+.adherencia-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  background: #f9f9f9;
+  border-radius: 8px;
+}
+
+.adherencia-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.ocasionales-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ocasional-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  background: #FFF9E6;
+  border-radius: 12px;
+  border-left: 4px solid #FF9800;
+}
+
+.ocasional-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.ocasional-nombre {
+  font-weight: 600;
+  font-size: 16px;
+  color: #333;
+}
+
+.ocasional-tomas {
+  font-weight: 600;
+  font-size: 14px;
+  color: #FF9800;
+  background: rgba(255, 152, 0, 0.1);
+  padding: 4px 12px;
+  border-radius: 16px;
+}
+
+.ocasional-info {
+  display: flex;
+  gap: 12px;
+  font-size: 14px;
+  color: #666;
+  flex-wrap: wrap;
+}
+
+.ocasional-stock {
+  font-weight: 500;
+}
+
+.ocasional-afeccion {
+  color: #999;
+}
+
+.adherencia-nombre {
+  flex: 1;
+  font-size: 16px;
+  color: #333;
+  font-weight: 600;
+}
+
+.adherencia-porcentaje {
+  font-size: 18px;
+  font-weight: 700;
+  min-width: 50px;
+  text-align: right;
+}
+
+.adherencia-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  color: #666;
+}
+
+.adherencia-stats .stat-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.adherencia-stats .stat-label {
+  font-size: 12px;
+  color: #666;
+}
+
+.cronico-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%);
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+  margin-left: 8px;
+  text-transform: uppercase;
+}
+
+.empty-message {
+  text-align: center;
+  color: #666;
+  padding: 40px 20px;
+  font-size: 14px;
+}
+
+.adherencia-bar-container {
+  flex: 2;
+  height: 8px;
+  background-color: #E0E0E0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.adherencia-bar {
+  height: 100%;
+  background-color: #666;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.weekly-summary {
+  margin-bottom: 20px;
+}
+
+.days-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
+
+.day-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.day-letter {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.day-dot {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #E0E0E0;
+}
+
+.dot-inner {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+}
+
+.day-dot.cumplido .dot-inner {
+  background-color: #4CAF50;
+}
+
+.day-dot.perdido .dot-inner {
+  background-color: #F44336;
+}
+
+.day-dot.parcial .dot-inner {
+  background-color: #FF9800;
+}
+
+.day-tomas {
+  font-size: 11px;
+  color: #666;
+  font-weight: 500;
+}
+
+.medicamento-semana {
+  margin-bottom: 16px;
+}
+
+.medicamento-semana-nombre {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  text-align: center;
+}
+
+.legend {
+  display: flex;
+  gap: 24px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #666;
+}
+
+.legend-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+}
+
+.legend-dot.cumplido {
+  background-color: #4CAF50;
+}
+
+.legend-dot.perdido {
+  background-color: #F44336;
+}
+
+.legend-dot.parcial {
+  background-color: #FF9800;
+}
+
+@media (max-width: 480px) {
+  .historial-header {
+    padding: max(16px, env(safe-area-inset-top) + 8px) var(--spacing-md) var(--spacing-md);
+  }
+
+  .historial-header h1 {
+    font-size: 20px;
+  }
+
+  .historial-content {
+    padding: var(--spacing-md);
+  }
+
+  .stats-cards {
+    gap: var(--spacing-sm);
+    grid-template-columns: 1fr;
+  }
+
+  .stat-card {
+    padding: var(--spacing-md);
+  }
+
+  .stat-number {
+    font-size: 24px;
+  }
+
+  .section-card {
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius-md);
+  }
+
+  .adherencia-promedio-card {
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius-md);
+  }
+
+  .adherencia-porcentaje-grande {
+    font-size: 36px;
+  }
+
+  .adherencia-icon {
+    font-size: 36px;
+  }
+}
+
+@media (max-width: 360px) {
+  .stats-cards {
+    gap: var(--spacing-xs);
+  }
+
+  .stat-card {
+    padding: var(--spacing-sm);
+  }
+
+  .adherencia-porcentaje-grande {
+    font-size: 32px;
+  }
+}
+

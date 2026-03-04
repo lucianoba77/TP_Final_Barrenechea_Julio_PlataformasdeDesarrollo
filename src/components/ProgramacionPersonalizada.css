@@ -1,0 +1,61 @@
+.programacion-card {
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.programacion-card .card-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-bottom: none;
+  border-radius: 10px 10px 0 0 !important;
+}
+
+.dia-row {
+  padding: 8px;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+}
+
+.dia-row:hover {
+  background-color: #f8f9fa;
+}
+
+.dia-checkbox {
+  font-size: 14px;
+}
+
+.dia-checkbox input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin-right: 8px;
+  cursor: pointer;
+}
+
+.horarios-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.horario-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.horario-input {
+  max-width: 150px;
+}
+
+@media (max-width: 576px) {
+  .horario-item {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .horario-input {
+    max-width: 100%;
+  }
+}
+

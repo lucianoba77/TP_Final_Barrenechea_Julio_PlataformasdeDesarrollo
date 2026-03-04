@@ -170,15 +170,17 @@ const BotiquinScreen = () => {
                   <button 
                     className="btn-suspender"
                     onClick={async () => {
+                      const estaSuspendido = medicamento.activo === false;
+                      const accion = estaSuspendido ? 'reactivado' : 'suspendido';
                       const resultado = await suspenderMedicina(medicamento.id);
                       if (resultado.success) {
-                        showSuccess(`${medicamento.nombre} ha sido suspendido`);
+                        showSuccess(`${medicamento.nombre} ha sido ${accion}`);
                       } else {
-                        showError(resultado.error || 'Error al suspender medicamento');
+                        showError(resultado.error || `Error al ${estaSuspendido ? 'reactivar' : 'suspender'} medicamento`);
                       }
                     }}
                   >
-                    Suspender
+                    {medicamento.activo === false ? 'Reactivar' : 'Suspender'}
                   </button>
                   <button 
                     className="btn-eliminar"

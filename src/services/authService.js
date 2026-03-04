@@ -1,8 +1,3 @@
-/**
- * Servicio de autenticación con Firebase Auth
- * Maneja registro, login, logout y gestión de sesión
- */
-
 import { 
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -18,26 +13,19 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, deleteDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
+import api, { setToken, removeToken } from './apiService';
 
-/**
- * Registra un nuevo usuario
- */
 export const registrarUsuario = async (email, password, nombre) => {
   try {
-    // Verificar si este email corresponde a un asistente antes de crear
     const { esAsistenteDe } = await import('./asistentesService');
     const asistenteResult = await esAsistenteDe(email);
     
-    // Crear usuario en Firebase Auth
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
 
-    // Actualizar el perfil con el nombre
     await updateProfile(user, {
       displayName: nombre
     });
-
-    // Determinar el rol: si es asistente, usar 'asistente', sino 'paciente'
     let role = 'paciente';
     let pacienteId = null;
     let nombreFinal = nombre;
@@ -45,17 +33,13 @@ export const registrarUsuario = async (email, password, nombre) => {
     if (asistenteResult.success && asistenteResult.esAsistente) {
       role = 'asistente';
       pacienteId = asistenteResult.pacienteId;
-      // Usar el nombre del asistente guardado en Firestore si está disponible
       if (asistenteResult.asistente && asistenteResult.asistente.nombreAsistente) {
         nombreFinal = asistenteResult.asistente.nombreAsistente;
-        // Actualizar también el displayName en Firebase Auth
         await updateProfile(user, {
           displayName: nombreFinal
         });
       }
     }
-
-    // Crear documento de usuario en Firestore
     const usuarioData = {
       id: user.uid,
       email: user.email,
@@ -83,88 +67,38 @@ export const registrarUsuario = async (email, password, nombre) => {
   }
 };
 
-/**
- * Inicia sesión con email y password
- */
 export const iniciarSesion = async (email, password) => {
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
+    const firebaseToken = await user.getIdToken();
 
-    // Obtener datos del usuario desde Firestore
-    const usuarioDoc = await getDoc(doc(db, 'usuarios', user.uid));
-    
-    // Verificar si es asistente
-    const { esAsistenteDe } = await import('./asistentesService');
-    const asistenteResult = await esAsistenteDe(user.email, { ignorarPacienteId: user.uid });
-    
-    if (usuarioDoc.exists()) {
-      const usuarioData = usuarioDoc.data();
+    try {
+      const response = await api.post('/auth/login', { firebaseToken });
       
-      // Actualizar última sesión
-      await setDoc(doc(db, 'usuarios', user.uid), {
-        ...usuarioData,
-        ultimaSesion: new Date().toISOString()
-      }, { merge: true });
-
-      let usuarioFinal = {
-        id: user.uid,
-        email: user.email,
-        nombre: user.displayName || usuarioData.nombre,
-        ...usuarioData
-      };
-
-      // Si es asistente, agregar información del paciente
-      // Priorizar pacienteId del documento de usuarios (más confiable)
-      if (asistenteResult.success && asistenteResult.esAsistente) {
-        usuarioFinal.role = 'asistente';
-        usuarioFinal.pacienteId = usuarioData.pacienteId || asistenteResult.pacienteId;
-        usuarioFinal.paciente = asistenteResult.paciente;
-      } else if (usuarioData.role === 'asistente' && usuarioData.pacienteId) {
-        // Si el documento ya tiene role 'asistente', usar esos datos
-        usuarioFinal.role = 'asistente';
-        usuarioFinal.pacienteId = usuarioData.pacienteId;
+      if (response.success && response.token) {
+        setToken(response.token);
+        return {
+          success: true,
+          usuario: response.usuario
+        };
+      } else {
+        await signOut(auth);
+        return {
+          success: false,
+          error: response.error || 'Error al obtener token del servidor'
+        };
       }
-
+    } catch (apiError) {
+      await signOut(auth);
       return {
-        success: true,
-        usuario: usuarioFinal
-      };
-    } else {
-      // Si no existe el documento, verificar si es asistente antes de crear
-      let role = 'paciente';
-      let pacienteId = null;
-      
-      // Verificar si este email corresponde a un asistente
-      if (asistenteResult.success && asistenteResult.esAsistente) {
-        role = 'asistente';
-        pacienteId = asistenteResult.pacienteId;
-      }
-      
-      const usuarioData = {
-        id: user.uid,
-        email: user.email,
-        nombre: user.displayName || email.split('@')[0],
-        role: role,
-        pacienteId: pacienteId,
-        tipoSuscripcion: 'gratis',
-        esPremium: false,
-        fechaCreacion: new Date().toISOString(),
-        ultimaSesion: new Date().toISOString()
-      };
-
-      await setDoc(doc(db, 'usuarios', user.uid), usuarioData);
-
-      return {
-        success: true,
-        usuario: usuarioData
+        success: false,
+        error: apiError.message || 'Error al conectar con el servidor'
       };
     }
   } catch (error) {
     console.error('Error al iniciar sesión:', error);
     
-    // Si el error es que el usuario no existe o credenciales inválidas,
-    // verificar si el email corresponde a un asistente en Firestore
     if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') {
       try {
         const { esAsistenteDe } = await import('./asistentesService');
@@ -188,30 +122,14 @@ export const iniciarSesion = async (email, password) => {
   }
 };
 
-/**
- * Inicia sesión con Google
- */
 export const iniciarSesionConGoogle = async () => {
   try {
-    // Verificar primero si el email corresponde a un asistente
-    // Los asistentes NO pueden usar Google login, solo email/password
-    const { esAsistenteDe } = await import('./asistentesService');
-    
-    // Necesitamos el email antes de hacer el popup, pero no lo tenemos
-    // Entonces haremos la verificación después del login
-    // Pero primero intentamos el login
-    
     const provider = new GoogleAuthProvider();
     const userCredential = await signInWithPopup(auth, provider);
     const user = userCredential.user;
-
-    // Verificar si el usuario ya existe en Firestore
-    const usuarioDoc = await getDoc(doc(db, 'usuarios', user.uid));
-    
-    // Verificar si es asistente
+    const { esAsistenteDe } = await import('./asistentesService');
     const asistenteResult = await esAsistenteDe(user.email, { ignorarPacienteId: user.uid });
     
-    // Si es asistente, cerrar sesión y mostrar error
     if (asistenteResult.success && asistenteResult.esAsistente) {
       await signOut(auth);
       return {
@@ -219,72 +137,35 @@ export const iniciarSesionConGoogle = async () => {
         error: 'Los asistentes solo pueden iniciar sesión con email y contraseña. No pueden usar Google login.'
       };
     }
-    
-    if (usuarioDoc.exists()) {
-      const usuarioData = usuarioDoc.data();
+
+    const firebaseToken = await user.getIdToken();
+
+    try {
+      const response = await api.post('/auth/login', { firebaseToken });
       
-      // Actualizar última sesión
-      await setDoc(doc(db, 'usuarios', user.uid), {
-        ...usuarioData,
-        ultimaSesion: new Date().toISOString()
-      }, { merge: true });
-
-      let usuarioFinal = {
-        id: user.uid,
-        email: user.email,
-        nombre: user.displayName || usuarioData.nombre,
-        ...usuarioData
-      };
-
-      // Si es asistente, agregar información
-      if (asistenteResult.success && asistenteResult.esAsistente) {
-        usuarioFinal.role = 'asistente';
-        usuarioFinal.pacienteId = asistenteResult.pacienteId;
-        usuarioFinal.paciente = asistenteResult.paciente;
+      if (response.success && response.token) {
+        setToken(response.token);
+        return {
+          success: true,
+          usuario: response.usuario
+        };
+      } else {
+        await signOut(auth);
+        return {
+          success: false,
+          error: response.error || 'Error al obtener token del servidor'
+        };
       }
-
+    } catch (apiError) {
+      await signOut(auth);
       return {
-        success: true,
-        usuario: usuarioFinal
-      };
-    } else {
-      // Crear nuevo usuario en Firestore
-      let role = 'paciente';
-      let pacienteId = null;
-      let paciente = null;
-
-      if (asistenteResult.success && asistenteResult.esAsistente) {
-        role = 'asistente';
-        pacienteId = asistenteResult.pacienteId;
-        paciente = asistenteResult.paciente;
-      }
-
-      const usuarioData = {
-        id: user.uid,
-        email: user.email,
-        nombre: user.displayName || user.email.split('@')[0],
-        role,
-        tipoSuscripcion: 'gratis',
-        esPremium: false,
-        fechaCreacion: new Date().toISOString(),
-        ultimaSesion: new Date().toISOString()
-      };
-
-      await setDoc(doc(db, 'usuarios', user.uid), usuarioData);
-
-      return {
-        success: true,
-        usuario: {
-          ...usuarioData,
-          pacienteId,
-          paciente
-        }
+        success: false,
+        error: apiError.message || 'Error al conectar con el servidor'
       };
     }
   } catch (error) {
     console.error('Error al iniciar sesión con Google:', error);
     
-    // Mensajes de error más específicos
     let mensajeError = obtenerMensajeError(error.code);
     
     if (error.code === 'auth/popup-closed-by-user') {
@@ -304,15 +185,21 @@ export const iniciarSesionConGoogle = async () => {
   }
 };
 
-/**
- * Cierra la sesión del usuario
- */
 export const cerrarSesion = async () => {
   try {
+    try {
+      await api.post('/auth/logout');
+    } catch (error) {
+      console.warn('Error al hacer logout en el backend:', error);
+    }
+    
+    removeToken();
     await signOut(auth);
+    
     return { success: true };
   } catch (error) {
     console.error('Error al cerrar sesión:', error);
+    removeToken();
     return {
       success: false,
       error: error.message
@@ -320,122 +207,53 @@ export const cerrarSesion = async () => {
   }
 };
 
-/**
- * Observa cambios en el estado de autenticación
- */
 export const observarEstadoAuth = (callback) => {
   return onAuthStateChanged(auth, async (user) => {
     if (user) {
-      // Usuario autenticado, obtener datos de Firestore
       try {
-        const usuarioDoc = await getDoc(doc(db, 'usuarios', user.uid));
-        if (usuarioDoc.exists()) {
-          const usuarioData = usuarioDoc.data();
-          
-          // Verificar si es asistente
-          const { esAsistenteDe } = await import('./asistentesService');
-          const asistenteResult = await esAsistenteDe(user.email, { ignorarPacienteId: user.uid });
-          
-          if (asistenteResult.success && asistenteResult.esAsistente) {
-            // Si el usuario tiene providerData de Google, es un login con Google
-            // Los asistentes no pueden usar Google login
-            const tieneGoogleProvider = user.providerData.some(provider => provider.providerId === 'google.com');
-            if (tieneGoogleProvider) {
-              // Cerrar sesión y no permitir login
-              await signOut(auth);
-              callback(null);
-              return;
-            }
-            
-            // Asegurar que el pacienteId esté presente
-            // Priorizar pacienteId del documento de usuarios (más confiable)
-            const pacienteIdFinal = usuarioData.pacienteId || asistenteResult.pacienteId;
-            if (!pacienteIdFinal) {
-              console.error('ERROR: Asistente sin pacienteId. No puede ver medicamentos.');
-            }
-            
-            callback({
-              id: user.uid,
-              email: user.email,
-              nombre: user.displayName || usuarioData.nombre,
-              role: 'asistente',
-              pacienteId: pacienteIdFinal,
-              paciente: asistenteResult.paciente,
-              ...usuarioData
-            });
-          } else {
-            callback({
-              id: user.uid,
-              email: user.email,
-              nombre: user.displayName || usuarioData.nombre,
-              role: usuarioData.role || 'paciente',
-              ...usuarioData
-            });
+        const { esAsistenteDe } = await import('./asistentesService');
+        const asistenteResult = await esAsistenteDe(user.email, { ignorarPacienteId: user.uid });
+        
+        if (asistenteResult.success && asistenteResult.esAsistente) {
+          const tieneGoogleProvider = user.providerData.some(provider => provider.providerId === 'google.com');
+          if (tieneGoogleProvider) {
+            await signOut(auth);
+            removeToken();
+            callback(null);
+            return;
           }
-        } else {
-          // Usuario nuevo, verificar si es asistente
-          try {
-            const { esAsistenteDe } = await import('./asistentesService');
-            const asistenteResult = await esAsistenteDe(user.email, { ignorarPacienteId: user.uid });
-            
-            if (asistenteResult.success && asistenteResult.esAsistente) {
-              // Si el usuario tiene providerData de Google, es un login con Google
-              // Los asistentes no pueden usar Google login
-              const tieneGoogleProvider = user.providerData.some(provider => provider.providerId === 'google.com');
-              if (tieneGoogleProvider) {
-                // Cerrar sesión y no permitir login
-                await signOut(auth);
-                callback(null);
-                return;
-              }
-              
-              // Crear documento en usuarios si no existe
-              const pacienteIdFinal = asistenteResult.pacienteId;
-              if (pacienteIdFinal) {
-                const nuevoUsuarioData = {
-                  id: user.uid,
-                  email: user.email,
-                  nombre: user.displayName || user.email.split('@')[0],
-                  role: 'asistente',
-                  pacienteId: pacienteIdFinal,
-                  tipoSuscripcion: 'gratis',
-                  esPremium: false,
-                  fechaCreacion: new Date().toISOString(),
-                  ultimaSesion: new Date().toISOString()
-                };
-                
-                // Crear documento en usuarios
-                await setDoc(doc(db, 'usuarios', user.uid), nuevoUsuarioData);
-                
-                callback({
-                  ...nuevoUsuarioData,
-                  paciente: asistenteResult.paciente
-                });
-              } else {
-                callback(null);
-              }
-            } else {
-              callback(null);
-            }
-          } catch (error) {
-            console.error('Error al verificar asistente:', error);
+        }
+
+        const firebaseToken = await user.getIdToken();
+        
+        try {
+          const response = await api.post('/auth/login', { firebaseToken });
+          
+          if (response.success && response.token) {
+            setToken(response.token);
+            callback(response.usuario);
+          } else {
+            await signOut(auth);
+            removeToken();
             callback(null);
           }
+        } catch (apiError) {
+          console.error('Error al obtener JWT del backend:', apiError);
+          await signOut(auth);
+          removeToken();
+          callback(null);
         }
       } catch (error) {
         console.error('Error al obtener datos del usuario:', error);
         callback(null);
       }
     } else {
-      // Usuario no autenticado
+      removeToken();
       callback(null);
     }
   });
 };
 
-/**
- * Obtiene el usuario actual
- */
 export const obtenerUsuarioActual = async () => {
   if (!auth.currentUser) {
     return null;
@@ -458,9 +276,6 @@ export const obtenerUsuarioActual = async () => {
   }
 };
 
-/**
- * Verifica si el usuario se autenticó con Google
- */
 export const esUsuarioGoogle = () => {
   if (!auth.currentUser) {
     return false;
@@ -471,12 +286,6 @@ export const esUsuarioGoogle = () => {
   return user.providerData.some(provider => provider.providerId === 'google.com');
 };
 
-/**
- * Elimina la cuenta del usuario y todos sus datos asociados
- * @param {string} email - Email del usuario (opcional si es Google)
- * @param {string} password - Contraseña del usuario (opcional si es Google)
- * @param {boolean} esGoogle - Indica si el usuario se autenticó con Google
- */
 export const eliminarCuenta = async (email, password, esGoogle = false) => {
   try {
     if (!auth.currentUser) {
@@ -487,66 +296,48 @@ export const eliminarCuenta = async (email, password, esGoogle = false) => {
     }
 
     const user = auth.currentUser;
-    const userId = user.uid;
 
-    // Reautenticar al usuario según su método de autenticación
     if (esGoogle) {
-      // Reautenticar con Google
       const provider = new GoogleAuthProvider();
       await reauthenticateWithPopup(user, provider);
     } else {
-      // Verificar que el email coincida
       if (user.email !== email) {
         return {
           success: false,
           error: 'El email no coincide con tu cuenta'
         };
       }
-
-      // Reautenticar con email y contraseña
       const credential = EmailAuthProvider.credential(email, password);
       await reauthenticateWithCredential(user, credential);
     }
 
-    // Eliminar todos los medicamentos del usuario
-    const { eliminarTodosLosMedicamentos } = await import('./medicamentosService');
-    const resultadoMedicamentos = await eliminarTodosLosMedicamentos(userId);
-    if (!resultadoMedicamentos.success) {
-      console.warn('Error al eliminar medicamentos:', resultadoMedicamentos.error);
-    }
+    const firebaseToken = await user.getIdToken();
 
-    // Eliminar todos los asistentes del paciente
-    const { eliminarTodosLosAsistentes } = await import('./asistentesService');
-    const resultadoAsistentes = await eliminarTodosLosAsistentes(userId);
-    if (!resultadoAsistentes.success) {
-      console.warn('Error al eliminar asistentes:', resultadoAsistentes.error);
-    }
-
-    // Eliminar tokens de Google Calendar si existen
     try {
-      const tokenRef = doc(db, 'googleTokens', userId);
-      const tokenDoc = await getDoc(tokenRef);
-      if (tokenDoc.exists()) {
-        await deleteDoc(tokenRef);
+      const response = await api.delete('/usuarios/perfil', {
+        body: JSON.stringify({ firebaseToken })
+      });
+
+      if (response.success) {
+        removeToken();
+        await signOut(auth);
+        
+        return {
+          success: true
+        };
+      } else {
+        return {
+          success: false,
+          error: response.error || 'Error al eliminar la cuenta'
+        };
       }
-    } catch (tokenError) {
-      console.warn('Error al eliminar tokens de Google Calendar:', tokenError);
+    } catch (apiError) {
+      console.error('Error al eliminar cuenta en el backend:', apiError);
+      return {
+        success: false,
+        error: apiError.message || 'Error al eliminar la cuenta'
+      };
     }
-
-    // Eliminar el documento del usuario en Firestore
-    try {
-      const usuarioRef = doc(db, 'usuarios', userId);
-      await deleteDoc(usuarioRef);
-    } catch (firestoreError) {
-      console.warn('Error al eliminar documento de usuario:', firestoreError);
-    }
-
-    // Eliminar el usuario de Firebase Auth
-    await deleteUser(user);
-
-    return {
-      success: true
-    };
   } catch (error) {
     console.error('Error al eliminar cuenta:', error);
     
@@ -568,9 +359,6 @@ export const eliminarCuenta = async (email, password, esGoogle = false) => {
   }
 };
 
-/**
- * Convierte códigos de error de Firebase a mensajes en español
- */
 const obtenerMensajeError = (codigoError) => {
   const mensajes = {
     'auth/email-already-in-use': 'Este email ya está registrado',

@@ -1,41 +1,20 @@
-/**
- * Servicio para sincronizar con Google Calendar
- * Maneja autenticación OAuth y creación/actualización de eventos
- */
-
-import { doc, setDoc, getDoc, deleteDoc } from 'firebase/firestore';
+import api from './apiService';
+import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 
-/**
- * Guarda el token de acceso de Google en Firestore
- */
 export const guardarTokenGoogle = async (userId, tokenData) => {
   try {
-    if (!db) {
-      throw new Error('Firestore no está disponible');
-    }
-
-    const tokenParaGuardar = {
-      ...tokenData,
-      fechaActualizacion: new Date().toISOString(),
-      userId: userId
-    };
-
-    await setDoc(doc(db, 'googleTokens', userId), tokenParaGuardar, { merge: true });
-    return { success: true };
+    const response = await api.post('/calendar/conectar', { tokenData });
+    return response;
   } catch (error) {
     console.error('Error al guardar token:', error);
     return {
       success: false,
-      error: error.message
+      error: error.message || 'Error al guardar token'
     };
   }
 };
 
-/**
- * Obtiene el token de acceso de Google del usuario
- * Verifica si el token está expirado
- */
 export const obtenerTokenGoogle = async (userId) => {
   try {
     if (!db) {
@@ -68,34 +47,38 @@ export const obtenerTokenGoogle = async (userId) => {
   }
 };
 
-/**
- * Elimina el token de acceso (desconecta Google Calendar)
- */
 export const eliminarTokenGoogle = async (userId) => {
   try {
-    if (!db) {
-      throw new Error('Firestore no está disponible');
-    }
-
-    await deleteDoc(doc(db, 'googleTokens', userId));
-    return { success: true };
+    const response = await api.delete('/calendar/desconectar');
+    return response;
   } catch (error) {
     console.error('Error al eliminar token:', error);
     return {
       success: false,
+      error: error.message || 'Error al eliminar token'
+    };
+  }
+};
+
+export const verificarConexion = async (userId) => {
+  try {
+    const response = await api.get('/calendar/estado');
+    return response;
+  } catch (error) {
+    console.error('Error al verificar conexión:', error);
+    return {
+      success: false,
+      conectado: false,
       error: error.message
     };
   }
 };
 
-/**
- * Crea un evento en Google Calendar para una toma de medicamento
- */
 export const crearEventoToma = async (accessToken, medicamento, fecha, hora) => {
   try {
     const fechaCompleta = new Date(`${fecha}T${hora}:00`);
     const fechaFin = new Date(fechaCompleta);
-    fechaFin.setMinutes(fechaFin.getMinutes() + 15); // Evento de 15 minutos
+    fechaFin.setMinutes(fechaFin.getMinutes() + 15);
 
     const evento = {
       summary: `💊 ${medicamento.nombre}`,
@@ -114,8 +97,8 @@ export const crearEventoToma = async (accessToken, medicamento, fecha, hora) => 
       reminders: {
         useDefault: false,
         overrides: [
-          { method: 'popup', minutes: 15 }, // Recordatorio 15 min antes
-          { method: 'popup', minutes: 5 }   // Recordatorio 5 min antes
+          { method: 'popup', minutes: 15 },
+          { method: 'popup', minutes: 5 }
         ]
       },
       colorId: obtenerColorId(medicamento.color),
@@ -272,10 +255,8 @@ export const crearEventosRecurrentes = async (accessToken, medicamento) => {
     // Determinar cuántos días de eventos crear
     let diasTratamiento;
     if (medicamento.esCronico) {
-      // Para medicamentos crónicos, crear eventos para 90 días
       diasTratamiento = 90;
     } else {
-      // Para medicamentos con fin de tratamiento, usar días de tratamiento o 30 por defecto
       diasTratamiento = medicamento.diasTratamiento || 30;
     }
 
@@ -329,20 +310,19 @@ export const crearEventosRecurrentes = async (accessToken, medicamento) => {
  * Convierte el color del medicamento a un colorId de Google Calendar
  */
 const obtenerColorId = (colorHex) => {
-  // Mapeo de colores hex a colorId de Google Calendar (1-11)
   const colores = {
-    '#FFFFFF': '1', // Lavanda
-    '#FFB6C1': '11', // Rosa
-    '#ADD8E6': '9', // Azul
-    '#F5F5DC': '5', // Amarillo
-    '#E6E6FA': '3', // Púrpura
-    '#90EE90': '10', // Verde
-    '#FFFF00': '5', // Amarillo
-    '#FFA500': '6', // Naranja
-    '#800080': '3', // Púrpura
-    '#00BFFF': '9', // Azul
-    '#00FF00': '10', // Verde
-    '#FF0000': '11' // Rojo
+    '#FFFFFF': '1',
+    '#FFB6C1': '11',
+    '#ADD8E6': '9',
+    '#F5F5DC': '5',
+    '#E6E6FA': '3',
+    '#90EE90': '10',
+    '#FFFF00': '5',
+    '#FFA500': '6',
+    '#800080': '3',
+    '#00BFFF': '9',
+    '#00FF00': '10',
+    '#FF0000': '11'
   };
 
   return colores[colorHex] || '1';
@@ -352,7 +332,6 @@ const obtenerColorId = (colorHex) => {
  * Verifica si el usuario tiene Google Calendar conectado
  */
 export const tieneGoogleCalendarConectado = async (userId) => {
-  const token = await obtenerTokenGoogle(userId);
-  return token !== null && token.access_token;
+  const resultado = await verificarConexion(userId);
+  return resultado.success && resultado.conectado;
 };
-

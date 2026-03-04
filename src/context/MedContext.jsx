@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { puedeAgregarMedicamento } from '../utils/subscription';
+import { hasToken } from '../services/apiService';
 import { 
   obtenerMedicamentos,
   agregarMedicamento as agregarMedicamentoFirebase,
@@ -22,6 +23,24 @@ export const MedProvider = ({ children }) => {
   // Cargar medicamentos cuando el usuario se autentica
   useEffect(() => {
     if (usuarioActual) {
+      // Verificar que el JWT esté disponible antes de cargar medicamentos
+      // Esto evita bucles infinitos cuando el JWT aún no está disponible
+      if (!hasToken()) {
+        // Esperar un poco y verificar nuevamente
+        const checkToken = setTimeout(() => {
+          if (hasToken()) {
+            const userIdBase = usuarioActual.role === 'asistente' 
+              ? usuarioActual.pacienteId 
+              : usuarioActual.id;
+            const userId = userIdBase || usuarioActual.uid;
+            if (userId) {
+              cargarMedicamentos();
+            }
+          }
+        }, 500);
+        return () => clearTimeout(checkToken);
+      }
+
       // Determinar el userId: si es asistente, usar pacienteId; si no, usar su propio id
       const userIdBase = usuarioActual.role === 'asistente' 
         ? usuarioActual.pacienteId 
@@ -61,13 +80,26 @@ export const MedProvider = ({ children }) => {
     }
 
     setCargando(true);
-    const resultado = await obtenerMedicamentos(userId);
-    if (resultado.success) {
-      setMedicamentos(resultado.medicamentos);
-    } else {
-      console.error('Error al cargar medicamentos:', resultado.error);
+    try {
+      const resultado = await obtenerMedicamentos(userId);
+      if (resultado.success) {
+        setMedicamentos(resultado.medicamentos);
+      } else {
+        console.error('Error al cargar medicamentos:', resultado.error);
+        // Si el error es de conexión, mostrar mensaje más claro
+        if (resultado.error && resultado.error.includes('conectar')) {
+          console.error('Verifica que el backend esté corriendo en http://localhost:3001');
+        }
+      }
+    } catch (error) {
+      console.error('Error al cargar medicamentos:', error);
+      // Si no hay medicamentos cargados, mantener array vacío
+      if (medicamentos.length === 0) {
+        setMedicamentos([]);
+      }
+    } finally {
+      setCargando(false);
     }
-    setCargando(false);
   };
 
   const agregarMedicina = async (medicina, tipoSuscripcion = 'gratis') => {
@@ -144,7 +176,10 @@ export const MedProvider = ({ children }) => {
   };
 
   const suspenderMedicina = async (id) => {
-    return await editarMedicina(id, { activo: false });
+    // Encontrar el medicamento para ver su estado actual
+    const medicamento = medicamentos.find(m => m.id === id);
+    const nuevoEstado = medicamento?.activo === false ? true : false;
+    return await editarMedicina(id, { activo: nuevoEstado });
   };
 
   const marcarToma = async (id, hora) => {

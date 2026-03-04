@@ -74,12 +74,17 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       setCargando(true);
-      await cerrarSesionFirebase();
+      const resultado = await cerrarSesionFirebase();
       setUsuarioActual(null);
+      return resultado;
     } catch (error) {
       console.error('Error al cerrar sesión:', error);
       // Aun así, limpiar el estado local
       setUsuarioActual(null);
+      return {
+        success: false,
+        error: error.message
+      };
     } finally {
       setCargando(false);
     }

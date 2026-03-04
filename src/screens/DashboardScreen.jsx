@@ -15,17 +15,43 @@ const DashboardScreen = () => {
   useStockAlerts(7); // Alertar cuando queden 7 días o menos
 
   // Filtrar medicamentos del día de hoy
-  // Solo mostrar medicamentos activos con tomas diarias > 0 (los de 0 tomas solo aparecen en botiquín)
+  // Si tiene programación personalizada, verificar si hay tomas para hoy
+  // Si no, usar la lógica tradicional con tomasDiarias y primeraToma
+  const diaHoy = new Date().getDay(); // 0 = Domingo, 6 = Sábado
+  
   const medicamentosHoy = medicamentos.filter(medicamento => {
-    return medicamento.activo !== false && 
-           medicamento.tomasDiarias > 0 &&
-           medicamento.primeraToma; // Debe tener hora programada
+    if (medicamento.activo === false) return false;
+    
+    // Si tiene programación personalizada, verificar si hay tomas para el día actual
+    if (medicamento.usarProgramacionPersonalizada && medicamento.programacionPersonalizada) {
+      const horariosHoy = medicamento.programacionPersonalizada[diaHoy];
+      return horariosHoy && horariosHoy.length > 0;
+    }
+    
+    // Si no tiene programación personalizada, usar la lógica tradicional
+    return medicamento.tomasDiarias > 0 && medicamento.primeraToma;
   });
 
   // Ordenar por hora
+  // Para programación personalizada, usar la primera hora del día
+  // Para programación tradicional, usar primeraToma
   const ordenados = [...medicamentosHoy].sort((medicamentoA, medicamentoB) => {
-    const horaA = parseInt(medicamentoA.primeraToma.replace(':', ''));
-    const horaB = parseInt(medicamentoB.primeraToma.replace(':', ''));
+    let horaA, horaB;
+    
+    if (medicamentoA.usarProgramacionPersonalizada && medicamentoA.programacionPersonalizada) {
+      const horariosHoyA = medicamentoA.programacionPersonalizada[diaHoy] || [];
+      horaA = horariosHoyA.length > 0 ? parseInt(horariosHoyA[0].replace(':', '')) : 9999;
+    } else {
+      horaA = parseInt(medicamentoA.primeraToma.replace(':', ''));
+    }
+    
+    if (medicamentoB.usarProgramacionPersonalizada && medicamentoB.programacionPersonalizada) {
+      const horariosHoyB = medicamentoB.programacionPersonalizada[diaHoy] || [];
+      horaB = horariosHoyB.length > 0 ? parseInt(horariosHoyB[0].replace(':', '')) : 9999;
+    } else {
+      horaB = parseInt(medicamentoB.primeraToma.replace(':', ''));
+    }
+    
     return horaA - horaB;
   });
 

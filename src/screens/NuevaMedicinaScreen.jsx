@@ -8,6 +8,7 @@ import { esUsuarioPremium, obtenerMensajeLimite } from '../utils/subscription';
 import { obtenerMedicamento } from '../services/medicamentosService';
 import UserMenu from '../components/UserMenu';
 import MainMenu from '../components/MainMenu';
+import ProgramacionPersonalizada from '../components/ProgramacionPersonalizada';
 import './NuevaMedicinaScreen.css';
 
 const NuevaMedicinaScreen = () => {
@@ -32,7 +33,9 @@ const NuevaMedicinaScreen = () => {
     esCronico: false,
     alarmasActivas: true,
     detalles: '',
-    fechaVencimiento: ''
+    fechaVencimiento: '',
+    programacionPersonalizada: null,
+    usarProgramacionPersonalizada: false
   });
   const [stockReferencia, setStockReferencia] = useState(null);
   const [requiereFechaVencimiento, setRequiereFechaVencimiento] = useState(false);
@@ -53,7 +56,6 @@ const NuevaMedicinaScreen = () => {
               tomasDiarias: med.tomasDiarias || 1,
               primeraToma: med.primeraToma || '',
               afeccion: med.afeccion || '',
-              // Al editar, mostrar el stock actual (lo que se ve en el botiquín) en lugar del stock inicial original
               stockInicial: med.stockActual !== undefined && med.stockActual !== null 
                 ? med.stockActual 
                 : (med.stockInicial || 0),
@@ -62,7 +64,9 @@ const NuevaMedicinaScreen = () => {
               esCronico: med.esCronico || false,
               alarmasActivas: med.alarmasActivas !== undefined ? med.alarmasActivas : true,
               detalles: med.detalles || '',
-              fechaVencimiento: med.fechaVencimiento || ''
+              fechaVencimiento: med.fechaVencimiento || '',
+              programacionPersonalizada: med.programacionPersonalizada || null,
+              usarProgramacionPersonalizada: !!med.programacionPersonalizada
             });
             setStockReferencia(med.stockActual !== undefined ? Number(med.stockActual) : null);
             setRequiereFechaVencimiento(false);
@@ -132,14 +136,25 @@ const NuevaMedicinaScreen = () => {
       return;
     }
 
-    // Si tiene tomas diarias > 0, debe tener primera toma
-    // Si NO es crónico, también debe tener días de tratamiento
-    if (formData.tomasDiarias > 0) {
+    if (formData.usarProgramacionPersonalizada) {
+      if (!formData.programacionPersonalizada || Object.keys(formData.programacionPersonalizada).length === 0) {
+        showError('Debes configurar al menos un día y horario en la programación personalizada');
+        return;
+      }
+      const totalTomas = Object.values(formData.programacionPersonalizada).reduce((sum, horarios) => sum + horarios.length, 0);
+      if (totalTomas === 0) {
+        showError('Debes configurar al menos un horario en la programación personalizada');
+        return;
+      }
+      if (!formData.esCronico && (!formData.diasTratamiento || formData.diasTratamiento <= 0)) {
+        showError('Ingresa la cantidad de días de tratamiento');
+        return;
+      }
+    } else if (formData.tomasDiarias > 0) {
       if (!formData.primeraToma) {
         showError('Debes ingresar la hora de la primera toma');
         return;
       }
-      // Solo requerir días de tratamiento si NO es crónico
       if (!formData.esCronico && (!formData.diasTratamiento || formData.diasTratamiento <= 0)) {
         showError('Ingresa la cantidad de días de tratamiento');
         return;
@@ -251,6 +266,7 @@ const NuevaMedicinaScreen = () => {
                 min="0"
                 max="6"
                 required
+                disabled={formData.usarProgramacionPersonalizada}
               />
               <p className="helper-text">
                 {formData.tomasDiarias === 0 
@@ -269,11 +285,51 @@ const NuevaMedicinaScreen = () => {
                 name="primeraToma"
                 value={formData.primeraToma}
                 onChange={cambioCampoFormulario}
-                required={formData.tomasDiarias > 0}
-                disabled={formData.tomasDiarias === 0}
+                required={formData.tomasDiarias > 0 && !formData.usarProgramacionPersonalizada}
+                disabled={formData.tomasDiarias === 0 || formData.usarProgramacionPersonalizada}
               />
             </div>
           </div>
+
+          {formData.tomasDiarias > 0 && (
+            <div className="form-group">
+              <div className="toggle-group">
+                <label htmlFor="usarProgramacionPersonalizada">Usar programación personalizada</label>
+                <input
+                  type="checkbox"
+                  id="usarProgramacionPersonalizada"
+                  name="usarProgramacionPersonalizada"
+                  checked={formData.usarProgramacionPersonalizada}
+                  onChange={(e) => {
+                    setFormData(prev => ({
+                      ...prev,
+                      usarProgramacionPersonalizada: e.target.checked,
+                      programacionPersonalizada: e.target.checked ? (prev.programacionPersonalizada || {}) : null,
+                      primeraToma: e.target.checked ? '' : prev.primeraToma
+                    }));
+                  }}
+                  className="checkbox-toggle"
+                />
+              </div>
+              <p className="helper-text">
+                Activa esta opción para programar tomas en días y horarios específicos de la semana
+              </p>
+            </div>
+          )}
+
+          {formData.usarProgramacionPersonalizada && formData.tomasDiarias > 0 && (
+            <ProgramacionPersonalizada
+              programacionPersonalizada={formData.programacionPersonalizada}
+              onChange={(nuevaProgramacion) => {
+                setFormData(prev => ({
+                  ...prev,
+                  programacionPersonalizada: nuevaProgramacion
+                }));
+              }}
+              diasTratamiento={formData.diasTratamiento}
+              esCronico={formData.esCronico}
+            />
+          )}
 
           <div className="form-group">
             <label htmlFor="afeccion">Condición que trata</label>

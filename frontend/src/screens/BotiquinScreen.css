@@ -1,0 +1,415 @@
+.botiquin-screen {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e8f4f8 100%);
+  padding-bottom: calc(100px + env(safe-area-inset-bottom));
+}
+
+.botiquin-header {
+  background: linear-gradient(135deg, var(--success-color) 0%, #388E3C 100%);
+  padding: max(20px, env(safe-area-inset-top) + 12px) var(--spacing-lg) var(--spacing-md);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  box-shadow: var(--shadow-md);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  overflow: visible;
+}
+
+.btn-home {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 20px;
+  transition: all 0.2s ease;
+}
+
+.btn-home:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+.botiquin-header h1 {
+  color: white;
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0;
+  flex: 1;
+  text-align: center;
+}
+
+.botiquin-content {
+  padding: var(--spacing-lg) var(--spacing-md);
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.empty-state {
+  text-align: center;
+  padding: var(--spacing-2xl) var(--spacing-lg);
+  background: var(--bg-primary);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-sm);
+  margin-top: var(--spacing-lg);
+}
+
+.empty-state p {
+  margin: var(--spacing-sm) 0;
+  font-size: 16px;
+  color: var(--text-secondary);
+}
+
+.empty-state p:first-child {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.empty-hint {
+  font-size: 14px;
+  color: var(--text-light);
+  margin-top: var(--spacing-sm);
+}
+
+.medicamentos-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.medicamento-card-container {
+  background: var(--bg-primary);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-md);
+  transition: all var(--transition-base);
+}
+
+.medicamento-card-container:active {
+  transform: scale(0.98);
+}
+
+.med-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.med-icon-circle {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  flex-shrink: 0;
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.med-icon-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 12px;
+}
+
+.med-title-section {
+  flex: 1;
+}
+
+.badges-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.med-nombre {
+  margin: 0 0 8px 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #333;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-badge.activo {
+  background-color: #2e7d32;
+  color: white;
+}
+
+.status-badge.inactivo {
+  background-color: #ccc;
+  color: #666;
+}
+
+.status-badge.agotado {
+  background-color: #d32f2f;
+  color: #fff;
+}
+
+.status-badge.vencido {
+  background-color: #111;
+  color: #fff;
+}
+
+.status-badge.cronico {
+  background-color: #263238;
+  color: #fff;
+}
+
+.agotado-banner {
+  background: #d32f2f;
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  display: inline-block;
+  margin-bottom: 10px;
+}
+
+.med-details {
+  margin-bottom: 16px;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  font-size: 14px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.detail-row:last-of-type {
+  border-bottom: none;
+}
+
+.reminder-badge {
+  background: rgba(255, 152, 0, 0.1);
+  border-left: 3px solid #FF9800;
+  padding-left: 12px;
+  margin-top: 8px;
+  border-radius: 4px;
+}
+
+.detail-label {
+  color: #666;
+  font-weight: 500;
+}
+
+.detail-value {
+  color: #333;
+  font-weight: 600;
+}
+
+.stock-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  margin-top: 8px;
+}
+
+.stock-bar-container {
+  flex: 1;
+  height: 8px;
+  background-color: #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.stock-bar {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.stock-text {
+  font-size: 14px;
+  font-weight: 600;
+  min-width: 80px;
+  text-align: right;
+}
+
+.stock-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.btn-restar-stock,
+.btn-agregar-stock {
+  flex: 1;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-restar-stock {
+  background: #FF5722;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.btn-restar-icon {
+  color: white;
+  font-weight: 700;
+  font-size: 18px;
+  display: inline-block;
+  line-height: 1;
+}
+
+.btn-restar-stock:hover:not(:disabled) {
+  background: #E64A19;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(255, 87, 34, 0.3);
+}
+
+.btn-restar-stock:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+
+.med-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.btn-suspender {
+  flex: 1;
+  padding: 12px;
+  background-color: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-suspender:hover {
+  background-color: #f5f5f5;
+}
+
+.btn-editar {
+  flex: 1;
+  padding: 12px;
+  background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.btn-editar:hover {
+  background: linear-gradient(135deg, #1976D2 0%, #1565C0 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+}
+
+.btn-eliminar {
+  width: 48px;
+  height: 48px;
+  background-color: #f44336;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-eliminar:hover {
+  background-color: #d32f2f;
+  transform: scale(1.05);
+}
+
+@media (max-width: 480px) {
+  .botiquin-header {
+    padding: max(16px, env(safe-area-inset-top) + 8px) var(--spacing-md) var(--spacing-md);
+  }
+
+  .botiquin-header h1 {
+    font-size: 20px;
+  }
+
+  .botiquin-content {
+    padding: var(--spacing-md);
+  }
+
+  .medicamento-card-container {
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius-md);
+  }
+
+  .med-nombre {
+    font-size: 18px;
+  }
+
+  .med-icon-circle {
+    width: 48px;
+    height: 48px;
+    font-size: 24px;
+  }
+
+  .med-actions {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  .btn-editar,
+  .btn-suspender,
+  .btn-eliminar {
+    width: 100%;
+    height: 44px;
+  }
+}
+
+@media (max-width: 360px) {
+  .med-nombre {
+    font-size: 16px;
+  }
+
+  .med-icon-circle {
+    width: 44px;
+    height: 44px;
+    font-size: 22px;
+  }
+}
+

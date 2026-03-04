@@ -1,0 +1,166 @@
+.medicamento-card {
+  margin-bottom: var(--spacing-md);
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+  background: var(--bg-primary);
+  transition: all var(--transition-base);
+}
+
+.medicamento-card:active {
+  transform: scale(0.98);
+}
+
+.card-background {
+  padding: var(--spacing-md);
+  min-height: 100px;
+  position: relative;
+  border: 2px solid transparent;
+  border-radius: var(--border-radius-md);
+}
+
+.card-content {
+  background-color: rgba(255, 255, 255, 0.98);
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius-md);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.med-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.med-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.med-icon-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 8px;
+}
+
+.med-info {
+  flex: 1;
+}
+
+.med-nombre {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #333;
+}
+
+.med-tomas-count {
+  font-size: 12px;
+  color: #666;
+}
+
+.med-hora {
+  font-size: 14px;
+  color: #333;
+  font-weight: 500;
+}
+
+.tomas-barras {
+  margin-bottom: 12px;
+}
+
+.toma-item {
+  margin-bottom: 8px;
+}
+
+.toma-label {
+  font-size: 13px;
+  color: #666;
+  font-weight: 500;
+}
+
+.btn-marcar {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  color: #111;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  margin-bottom: 12px;
+  transition: all 0.2s ease;
+}
+
+.btn-marcar:hover {
+  opacity: 0.9;
+  transform: scale(1.02);
+}
+
+.btn-marcar:disabled {
+  opacity: 1;
+  border: 1px solid #d0d7de;
+}
+
+.stock-info {
+  font-size: 13px;
+  color: #333;
+  text-align: center;
+}
+
+.stock-info strong {
+  font-weight: 700;
+}
+
+.expired-warning-message {
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #111;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+}
+
+@media (max-width: 480px) {
+  .medicamento-card {
+    margin-bottom: var(--spacing-md);
+    border-radius: var(--border-radius-md);
+  }
+
+  .card-background {
+    padding: var(--spacing-sm);
+    min-height: 90px;
+  }
+
+  .card-content {
+    padding: var(--spacing-sm);
+  }
+
+  .med-nombre {
+    font-size: 16px;
+  }
+
+  .med-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+  }
+
+  .btn-marcar {
+    padding: 14px;
+    font-size: 15px;
+  }
+}
+
